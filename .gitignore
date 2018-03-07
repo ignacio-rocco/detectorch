@@ -6,6 +6,6 @@ lib/cppcuda/build/
 .ipynb_checkpoints/
 debug/
 lib/utils_cython/*.c
-demo/output/
+demo/output/*.pdf
 lib/cppcuda_cffi/roialign/
 
