@@ -1,0 +1,11 @@
+**/*.o
+**/*.so
+**/__pycache__/
+build/
+lib/cppcuda/build/
+.ipynb_checkpoints/
+debug/
+lib/utils_cython/*.c
+demo/output/
+lib/cppcuda_cffi/roialign/
+
