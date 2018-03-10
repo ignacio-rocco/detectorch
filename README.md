@@ -19,7 +19,14 @@ The only tested base network model so far is ResNet-50 (no FPN for the moment). 
 </div>
 
 ## Evaluation
-Both bounding box evaluation and instance segmentation evaluation where tested, yielding the same results as in the Detectron caffe2 models.
+Both bounding box evaluation and instance segmentation evaluation where tested, yielding the same results as in the Detectron caffe2 models:
+
+| Model | box AP | mask AP |
+| --- | --- | --- |
+| [fast_rcnn_R-50-C4_2x](https://s3-us-west-2.amazonaws.com/detectron/36224046/12_2017_baselines/fast_rcnn_R-50-C4_2x.yaml.08_22_57.XFxNqEnL/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 35.6 | |
+| [e2e_faster_rcnn_R-50-C4_2x](https://s3-us-west-2.amazonaws.com/detectron/35857281/12_2017_baselines/e2e_faster_rcnn_R-50-C4_2x.yaml.01_34_56.ScPH0Z4r/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 36.5 | |
+| [e2e_mask_rcnn_R-50-C4_2x](https://s3-us-west-2.amazonaws.com/detectron/35858828/12_2017_baselines/e2e_mask_rcnn_R-50-C4_2x.yaml.01_46_47.HBThTerB/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 37.8  | 32.8 |
+
 
 ## Training
 No training was tested. The losses are not yet implemented. Please contribute!
