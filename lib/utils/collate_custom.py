@@ -1,6 +1,6 @@
 import torch
 import collections
-from torch.utils.data.dataloader import default_collate
+#from torch.utils.data.dataloader import default_collate
 import itertools
 
 def collate_custom(batch,key=None):
@@ -15,11 +15,13 @@ def collate_custom(batch,key=None):
     if isinstance(batch[0], collections.Mapping):
         return {key: collate_custom([d[key] for d in batch],key) for key in batch[0]}
     # these cases will occur in recursion
-    elif torch.is_tensor(batch[0]): # for tensors, use standrard collating function
-        return default_collate(batch)
-    elif isinstance(batch,list) and isinstance(batch[0],list): # lists of lists
+    #elif torch.is_tensor(batch[0]): # for tensors, use standrard collating function
+        #return default_collate(batch)
+    elif isinstance(batch,list) and isinstance(batch[0],list): # flatten lists of lists
         flattened_list  = list(itertools.chain(*batch))
         return flattened_list
-    else: # for other types (i.e. lists), return as is
+    elif isinstance(batch,list) and len(batch)==1: # lists of length 1, remove list wrap
+        return batch[0]
+    else: # for other types (i.e. lists of len!=1), return as is
         return batch
 

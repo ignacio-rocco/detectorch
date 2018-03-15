@@ -22,7 +22,7 @@ The only tested base network model so far is ResNet-50 (no FPN for the moment). 
 Both bounding box evaluation and instance segmentation evaluation where tested, yielding the same results as in the Detectron caffe2 models.
 
 ## Training
-No training was tested. The losses are not yet implemented. Please contribute!
+Training code is experimental. See `train_fast.py` for training Fast R-CNN. It seems to work, but slow.
 
 ## Installation
 First, clone the repo with `git clone --recursive https://github.com/ignacio-rocco/detectorch` so that you also clone the Coco API.
@@ -34,6 +34,7 @@ The code can be used with PyTorch 0.3.1 or PyTorch 0.4 (master) under Python 3. 
 - cython (`conda install cython`)
 - matplotlib (`conda install matplotlib`)
 - scikit-image (`conda install scikit-image`)
+- ninja (`conda install ninja`) *(required for Pytorch 0.4 only)*
 
 Additionally, you need to build the Coco API and RoIAlign layer. See below.
 

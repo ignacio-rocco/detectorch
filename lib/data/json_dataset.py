@@ -28,14 +28,20 @@ from __future__ import unicode_literals
 
 import copy
 import pickle
-import logging
+#import logging
 import numpy as np
 import os
 import scipy.sparse
 import utils.boxes as box_utils
+from pycocotools import mask as COCOmask
 from pycocotools.coco import COCO
 
-logger = logging.getLogger(__name__)
+class logging():  # overwrite logger with dummy class which prints
+    def info(self,s):
+        print(s)
+
+#logger = logging.getLogger(__name__)
+logger = logging()
 
 cfg_TRAIN_GT_MIN_AREA = -1
 
