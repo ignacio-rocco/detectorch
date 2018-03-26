@@ -1,7 +1,7 @@
 # Detectorch  - detectron for PyTorch
 
 (Disclaimer: this is work in progress and does not feature all the functionalities of detectron. Currently only inference and evaluation are supported -- no training)
-
+(News: Now supporting FPN and ResNet-101!)
 
 This code allows to use some of the [Detectron models for object detection from Facebook AI Research](https://github.com/facebookresearch/Detectron/) with PyTorch.
 
@@ -11,21 +11,25 @@ It currently supports:
 - Faster R-CNN
 - Mask R-CNN
 
-The only tested base network model so far is ResNet-50 (no FPN for the moment). The pre-trained models from caffe2 can be imported and used on PyTorch.
+It supports ResNet-50/101 models with or without FPN. The pre-trained models from caffe2 can be imported and used on PyTorch.
 
 <div align="center">
   <img src="demo/output/sample.jpg" width="700px" />
-  <p>Example Mask R-CNN with ResNet-50.</p>
+  <p>Example Mask R-CNN with ResNet-101 and FPN.</p>
 </div>
 
 ## Evaluation
-Both bounding box evaluation and instance segmentation evaluation where tested, yielding the same results as in the Detectron caffe2 models:
+Both bounding box evaluation and instance segmentation evaluation where tested, yielding the same results as in the Detectron caffe2 models. These results below have been computed using the PyTorch code:
 
-| Model | box AP | mask AP |
-| --- | --- | --- |
-| [fast_rcnn_R-50-C4_2x](https://s3-us-west-2.amazonaws.com/detectron/36224046/12_2017_baselines/fast_rcnn_R-50-C4_2x.yaml.08_22_57.XFxNqEnL/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 35.6 | |
-| [e2e_faster_rcnn_R-50-C4_2x](https://s3-us-west-2.amazonaws.com/detectron/35857281/12_2017_baselines/e2e_faster_rcnn_R-50-C4_2x.yaml.01_34_56.ScPH0Z4r/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 36.5 | |
-| [e2e_mask_rcnn_R-50-C4_2x](https://s3-us-west-2.amazonaws.com/detectron/35858828/12_2017_baselines/e2e_mask_rcnn_R-50-C4_2x.yaml.01_46_47.HBThTerB/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 37.8  | 32.8 |
+| Model | box AP | mask AP |  model id |
+| --- | --- | --- | --- |
+| [fast_rcnn_R-50-C4_2x](https://s3-us-west-2.amazonaws.com/detectron/36224046/12_2017_baselines/fast_rcnn_R-50-C4_2x.yaml.08_22_57.XFxNqEnL/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 35.6 | | 36224046 |
+| [fast_rcnn_R-50-FPN_2x](https://s3-us-west-2.amazonaws.com/detectron/36225249/12_2017_baselines/fast_rcnn_R-50-FPN_2x.yaml.08_40_18.zoChak1f/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 36.8 | | 36225249 | 
+| [e2e_faster_rcnn_R-50-C4_2x](https://s3-us-west-2.amazonaws.com/detectron/35857281/12_2017_baselines/e2e_faster_rcnn_R-50-C4_2x.yaml.01_34_56.ScPH0Z4r/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 36.5 | | 35857281 |
+| [e2e_faster_rcnn_R-50-FPN_2x](https://s3-us-west-2.amazonaws.com/detectron/35857389/12_2017_baselines/e2e_faster_rcnn_R-50-FPN_2x.yaml.01_37_22.KSeq0b5q/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 37.9 | | 35857389 |
+| [e2e_mask_rcnn_R-50-C4_2x](https://s3-us-west-2.amazonaws.com/detectron/35858828/12_2017_baselines/e2e_mask_rcnn_R-50-C4_2x.yaml.01_46_47.HBThTerB/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 37.8  | 32.8 | 35858828 |
+| [e2e_mask_rcnn_R-50-FPN_2x](https://s3-us-west-2.amazonaws.com/detectron/35859007/12_2017_baselines/e2e_mask_rcnn_R-50-FPN_2x.yaml.01_49_07.By8nQcCH/output/train/coco_2014_train%3Acoco_2014_valminusminival/generalized_rcnn/model_final.pkl)| 38.6 | 34.5 | 35859007 | 
+| [e2e_mask_rcnn_R-101-FPN_2x](https://s3-us-west-2.amazonaws.com/detectron/35861858/12_2017_baselines/e2e_mask_rcnn_R-101-FPN_2x.yaml.02_32_51.SgT4y1cO/output/train/coco_2014_train:coco_2014_valminusminival/generalized_rcnn/model_final.pkl) | 40.9 | 36.4 | 35861858 |
 
 
 ## Training

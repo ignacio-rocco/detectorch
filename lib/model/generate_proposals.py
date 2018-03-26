@@ -15,18 +15,22 @@ class GenerateProposals(torch.nn.Module):
                  rpn_pre_nms_top_n = None,
                  rpn_post_nms_top_n = None,
                  rpn_nms_thresh = None,
-                 rpn_min_size = 0):
+                 rpn_min_size = 0,
+                 anchor_sizes=(32, 64, 128, 256, 512), 
+                 anchor_aspect_ratios=(0.5, 1, 2)):
         super(GenerateProposals, self).__init__()
-        self._anchors = generate_anchors(stride=1. / spatial_scale)
+        self._anchors = generate_anchors(sizes=anchor_sizes, aspect_ratios=anchor_aspect_ratios,stride=1. / spatial_scale)
         self._num_anchors = self._anchors.shape[0]
-        self._feat_stride = 1. / spatial_scale
+        self._spatial_scale = spatial_scale
         self._train = train        
         self.rpn_pre_nms_top_n = rpn_pre_nms_top_n if rpn_pre_nms_top_n is not None else (12000 if train else 6000)
         self.rpn_post_nms_top_n = rpn_post_nms_top_n if rpn_post_nms_top_n is not None else (2000 if train else 1000)
         self.rpn_nms_thresh = rpn_nms_thresh if rpn_nms_thresh is not None else 0.7
         self.rpn_min_size = rpn_min_size if rpn_min_size is not None else 0
 
-    def forward(self, rpn_cls_probs, rpn_bbox_pred, im_height, im_width, scaling_factor):
+    def forward(self, rpn_cls_probs, rpn_bbox_pred, im_height, im_width, scaling_factor, spatial_scale=None):
+        if spatial_scale is None:  
+            spatial_scale = self._spatial_scale
         """See modeling.detector.GenerateProposals for inputs/outputs
         documentation.
         """
@@ -44,7 +48,8 @@ class GenerateProposals(torch.nn.Module):
         # 1. get anchors at all features positions
         all_anchors_np = self.get_all_anchors(num_images = rpn_cls_probs.shape[0],
                                       feature_height = rpn_cls_probs.shape[2],
-                                      feature_width = rpn_cls_probs.shape[3])
+                                      feature_width = rpn_cls_probs.shape[3],
+                                      spatial_scale = spatial_scale)
         
         all_anchors = Variable(torch.FloatTensor(all_anchors_np))
         if rpn_cls_probs.is_cuda:
@@ -116,14 +121,15 @@ class GenerateProposals(torch.nn.Module):
             
         return proposals, scores
         
-    def get_all_anchors(self,num_images,feature_height,feature_width):
+    def get_all_anchors(self,num_images,feature_height,feature_width,spatial_scale):
         # 1. Generate proposals from bbox deltas and shifted anchors
         # the number of proposals is equal to the number of anchors (eg.15)
         # times the feature support size (eg=50x50=2500), totaling about 40k
 
         # Enumerate all shifted positions on the (H, W) grid
-        shift_x = np.arange(0, feature_width) * self._feat_stride
-        shift_y = np.arange(0, feature_height) * self._feat_stride
+        feat_stride = 1. / spatial_scale
+        shift_x = np.arange(0, feature_width) * feat_stride
+        shift_y = np.arange(0, feature_height) * feat_stride
         shift_x, shift_y = np.meshgrid(shift_x, shift_y, copy=False)
         # Convert to (K, 4), K=H*W, where the columns are (dx, dy, dx, dy)
         # shift pointing to each grid location

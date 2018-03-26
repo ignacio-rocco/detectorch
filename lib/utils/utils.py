@@ -27,51 +27,45 @@ def to_cuda(x):
         return [y.cuda() for y in x]
     return x.cuda()
 
-def to_variable(x,volatile=True):
+def to_cuda_variable(x,volatile=True):
     if isinstance(x,dict):
-        return {key: to_variable(x[key],volatile=volatile) for key in x.keys()}
+        return {key: to_cuda_variable(x[key],volatile=volatile) for key in x.keys()}
     if isinstance(x,list):
-        return [to_variable(y,volatile=volatile) for y in x]
+        return [to_cuda_variable(y) for y in x]
     if isinstance(x, (int, float)):
         return x
     if isinstance(x, torch.Tensor):
         if torch.__version__[:3]=="0.4" or volatile==False:
-            return Variable(x)
+            return Variable(x.cuda())
         else:
-            return Variable(x,volatile=True)
+            return Variable(x.cuda(),volatile=True)
 
 
-def to_cuda_variable(x,volatile=True,gpu=None):
-    if isinstance(x,dict):
-        return {key: to_cuda_variable(x[key],volatile=volatile,gpu=gpu) for key in x.keys()}
-    if isinstance(x,list):
-        return [to_cuda_variable(y,volatile=volatile,gpu=gpu) for y in x]
-    if isinstance(x, (int, float)):
-        return x
-    if isinstance(x, torch.Tensor):
-        if torch.__version__[:3]=="0.4" or volatile==False:
-            return Variable(x.cuda(gpu))
-        else:
-            return Variable(x.cuda(gpu),volatile=True)
-
-
-
-def isnan(x):
-    return x != x
-
-def nanbreak(grad):
-    nancount = torch.sum(isnan(grad).float()).cpu().data.numpy().item()
-    if nancount>0:
-        import pdb; pdb.set_trace()
-    return None
-
-def infbreak(grad):
-    max = torch.max(grad).cpu().data.numpy().item()
-    if max>1e10:
-        import pdb; pdb.set_trace()
-    return None
-
-def printmax(grad):
-    max = torch.max(grad).cpu().data.numpy().item()
-    print(max)
-    return None
+def parse_th_to_caffe2(terms,i=0,parsed=''):
+    # Convert PyTorch ResNet weight names to caffe2 weight names
+    if i==0:
+        if terms[i]=='conv1':
+            parsed='conv1'
+        elif terms[i]=='bn1':
+            parsed='res_conv1'
+        elif terms[i].startswith('layer'):
+            parsed='res'+str(int(terms[i][-1])+1)
+    else:
+        if terms[i]=='weight' and (terms[i-1].startswith('conv') or terms[i-1]=='0'):
+            parsed+='_w'
+        elif terms[i]=='weight' and (terms[i-1].startswith('bn') or terms[i-1]=='1'):
+            parsed+='_bn_s'
+        elif terms[i]=='bias' and (terms[i-1].startswith('bn') or terms[i-1]=='1'):
+            parsed+='_bn_b'
+        elif terms[i-1].startswith('layer'):
+            parsed+='_'+terms[i]
+        elif terms[i].startswith('conv') or terms[i].startswith('bn'):
+            parsed+='_branch2'+chr(96+int(terms[i][-1]))
+        elif terms[i]=='downsample':
+            parsed+='_branch1'
+    # increase counter
+    i+=1
+    # do recursion
+    if i==len(terms):
+        return parsed
+    return parse_th_to_caffe2(terms,i,parsed)

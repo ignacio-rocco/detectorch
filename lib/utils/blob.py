@@ -24,6 +24,36 @@
 import cv2
 import numpy as np
 
+def im_list_to_blob(ims,fpn_on=False,fpn_coarsest_stride=32):
+    """Convert a list of images into a network input. Assumes images were
+    prepared using prep_im_for_blob or equivalent: i.e.
+      - BGR channel order
+      - pixel means subtracted
+      - resized to the desired input size
+      - float32 numpy ndarray format
+    Output is a 4D HCHW tensor of the images concatenated along axis 0 with
+    shape.
+    """
+    max_shape = np.array([im.shape for im in ims]).max(axis=0)
+    # Pad the image so they can be divisible by a stride
+    if fpn_on:
+        stride = float(fpn_coarsest_stride)
+        max_shape[0] = int(np.ceil(max_shape[0] / stride) * stride)
+        max_shape[1] = int(np.ceil(max_shape[1] / stride) * stride)
+
+    num_images = len(ims)
+    blob = np.zeros((num_images, max_shape[0], max_shape[1], 3),
+                    dtype=np.float32)
+    for i in range(num_images):
+        im = ims[i]
+        blob[i, 0:im.shape[0], 0:im.shape[1], :] = im
+    # Move channels (axis 3) to axis 1
+    # Axis order will become: (batch elem, channel, height, width)
+    channel_swap = (0, 3, 1, 2)
+    blob = blob.transpose(channel_swap)
+    return blob
+
+
 def prep_im_for_blob(im, pixel_means=[122.7717, 115.9465, 102.9801], target_sizes=[800], max_size=1333):
     """Prepare an image for use as a network input blob. Specially:
       - Subtract per-channel pixel mean
@@ -55,3 +85,30 @@ def prep_im_for_blob(im, pixel_means=[122.7717, 115.9465, 102.9801], target_size
         im_scales.append(im_scale)
 
     return ims, im_scales
+
+def get_rois_blob(im_rois, im_scale):
+    """Converts RoIs into network inputs.
+    Arguments:
+        im_rois (ndarray): R x 4 matrix of RoIs in original image coordinates
+        im_scale_factors (list): scale factors as returned by _get_image_blob
+    Returns:
+        blob (ndarray): R x 5 matrix of RoIs in the image pyramid with columns
+            [level, x1, y1, x2, y2]
+    """
+    rois, levels = project_im_rois(im_rois, im_scale)
+    rois_blob = np.hstack((levels, rois))
+    return rois_blob.astype(np.float32, copy=False)
+
+
+def project_im_rois(im_rois, scales):
+    """Project image RoIs into the image pyramid built by _get_image_blob.
+    Arguments:
+        im_rois (ndarray): R x 4 matrix of RoIs in original image coordinates
+        scales (list): scale factors as returned by _get_image_blob
+    Returns:
+        rois (ndarray): R x 4 matrix of projected RoI coordinates
+        levels (ndarray): image pyramid levels used by each projected RoI
+    """
+    rois = im_rois.astype(np.float, copy=False) * scales
+    levels = np.zeros((im_rois.shape[0], 1), dtype=np.int)
+    return rois, levels

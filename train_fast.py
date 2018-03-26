@@ -40,6 +40,8 @@ parser.add_argument('--cnn-mapping', default='files/mapping_files/resnet50_mappi
 #                  ))
 # parser.add_argument('--dset-ann', default=('datasets/data/coco/annotations/instances_train2014.json',
 #                  ))
+
+# use MINIVAL for debugging as it loads fast
 parser.add_argument('--dset-path', default=('datasets/data/coco/coco_val2014',
          ))
 parser.add_argument('--dset-rois', default=('files/proposal_files/coco_2014_minival/rpn_proposals.pkl',
@@ -48,7 +50,7 @@ parser.add_argument('--dset-ann', default=('datasets/data/coco/annotations/insta
                ))
 # DATALOADER
 
-parser.add_argument('-j', '--workers', default=12, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 0)')
 # SOLVER
 parser.add_argument('--base-lr', default=0.01, type=float)

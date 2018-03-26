@@ -1,7 +1,8 @@
 import numpy as np
 import torch
-from utils.prep_im_for_blob import prep_im_for_blob
+from utils.blob import prep_im_for_blob,im_list_to_blob
 from utils.fast_rcnn_sample_rois import fast_rcnn_sample_rois
+from utils.multilevel_rois import add_multilevel_rois_for_test
 
 class preprocess_sample(object):
     # performs the preprocessing (including building image pyramids and scaling the coordinates)
@@ -10,12 +11,14 @@ class preprocess_sample(object):
                  max_size=1333,
                  mean=[122.7717, 115.9465, 102.9801],
                  remove_dup_proposals=True,
+                 fpn_on=False,
                  spatial_scale=0.0625,
                  sample_proposals_for_training=False):
         self.mean=mean
         self.target_sizes=target_sizes if isinstance(target_sizes,list) else [target_sizes]
         self.max_size=max_size
-        self.remove_dup_proposals=True
+        self.remove_dup_proposals=remove_dup_proposals
+        self.fpn_on=fpn_on
         self.spatial_scale=spatial_scale
         self.sample_proposals_for_training = sample_proposals_for_training
         
@@ -26,15 +29,21 @@ class preprocess_sample(object):
                                              pixel_means=self.mean,
                                              target_sizes=self.target_sizes,
                                              max_size=self.max_size)
-        # singlescale = len(self.target_sizes)==1 (future functionality for FPN) 
-        sample['image'] = torch.FloatTensor(im_list[0]).permute(2,0,1).unsqueeze(0) # (future functionality for FPN) if singlescale else [[torch.FloatTensor(im).permute(2,0,1) for im in im_list]]
-        sample['scaling_factors'] = im_scales[0] #  (future functionality for FPN) if singlescale else [[torch.FloatTensor([sc]) for sc in im_scales]]
+        sample['image'] = torch.FloatTensor(im_list_to_blob(im_list,self.fpn_on)) # im_list_to blob swaps channels and adds stride in case of fpn
+        sample['scaling_factors'] = im_scales[0] 
         sample['original_im_size'] = torch.FloatTensor(original_im_size)
         if len(sample['dbentry']['boxes'])!=0 and not self.sample_proposals_for_training: # Fast RCNN test
-            proposals = sample['dbentry']['boxes']*im_scales[0]  # (future functionality for FPN) if singlescale else [[sample['proposal_coords']*sc for sc in im_scales]]
+            proposals = sample['dbentry']['boxes']*im_scales[0]  
             if self.remove_dup_proposals:
-                proposals,_ = self.remove_dup_prop(proposals) # (future functionality for FPN) if singlescale else [self.remove_dup_prop(prop) for prop in sample['proposal_coords'][0]]            
-            sample['rois'] = torch.FloatTensor(proposals)
+                proposals,_ = self.remove_dup_prop(proposals) 
+            
+            if self.fpn_on==False:
+                sample['rois'] = torch.FloatTensor(proposals)
+            else:
+                multiscale_proposals = add_multilevel_rois_for_test({'rois': proposals},'rois')
+                for k in multiscale_proposals.keys():
+                    sample[k] = torch.FloatTensor(multiscale_proposals[k])
+
         elif self.sample_proposals_for_training: # Fast RCNN training
             sampled_rois_labels_and_targets = fast_rcnn_sample_rois(roidb=sample['dbentry'],
                                                                     im_scale=im_scales[0],

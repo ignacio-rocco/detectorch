@@ -159,7 +159,7 @@ class RoIAlign(Module):
     def forward(self, features, rois):
         # features is a Variable/FloatTensor of size BxCxHxW
         # rois is a (optional: list of) Variable/FloatTensor IDX,Xmin,Ymin,Xmax,Ymax (normalized to [0,1])
-        rois = self.preprocess_rois(rois)
+        rois = preprocess_rois(rois)
         output = RoIAlignFunction.apply(features,
                                         rois,
                                         self.pooled_height,
@@ -169,20 +169,20 @@ class RoIAlign(Module):
         return output
        
 
-    def preprocess_rois(self, rois):
-        # do some verifications on what has been passed as rois
-        if isinstance(rois,list): # if list, convert to single tensor (used for multiscale)
-            rois = torch.cat(tuple(rois),0)
-        if isinstance(rois,Variable):
-            if rois.dim()==3:
-                if rois.size(0)==1:
-                    rois = rois.squeeze(0)
-                else:
-                    raise("rois has wrong size")
-            if rois.size(1)==4:
-                # add zeros
-                zeros = Variable(torch.zeros((rois.size(0),1)))
-                if rois.is_cuda:
-                    zeros = zeros.cuda()
-                rois = torch.cat((zeros,rois),1).contiguous()
-        return rois
+def preprocess_rois(rois):
+    # do some verifications on what has been passed as rois
+    if isinstance(rois,list): # if list, convert to single tensor (used for multiscale)
+        rois = torch.cat(tuple(rois),0)
+    if isinstance(rois,Variable):
+        if rois.dim()==3:
+            if rois.size(0)==1:
+                rois = rois.squeeze(0)
+            else:
+                raise("rois has wrong size")
+        if rois.size(1)==4:
+            # add zeros
+            zeros = Variable(torch.zeros((rois.size(0),1)))
+            if rois.is_cuda:
+                zeros = zeros.cuda()
+            rois = torch.cat((zeros,rois),1).contiguous()
+    return rois
