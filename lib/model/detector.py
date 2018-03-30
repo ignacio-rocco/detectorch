@@ -13,14 +13,14 @@ class fpn_body(torch.nn.Module):
     def __init__(self, conv_body, conv_body_layers, fpn_layers):
         super(fpn_body, self).__init__()
         self.conv_body = conv_body
-        # Lateral convolution layers. This is not run as a sequential model. Sequential is just used to group the layers together.
-        self.fpn_lateral = torch.nn.Sequential(*[torch.nn.Conv2d(in_channels=conv_body[conv_body_layers.index(l)][-1].bn3.num_features,
+        # Lateral convolution layers
+        self.fpn_lateral = torch.nn.ModuleList([torch.nn.Conv2d(in_channels=conv_body[conv_body_layers.index(l)][-1].bn3.num_features,
                                                                  out_channels=256,
                                                                  kernel_size=1,
                                                                  stride=1,
                                                                  padding=0) for l in fpn_layers])
-        # make output convolutions. This is not run as a sequential model. Sequential is just used to group the layers together.
-        self.fpn_output = torch.nn.Sequential(*[torch.nn.Conv2d(in_channels=256,
+        # Output convolution layers
+        self.fpn_output = torch.nn.ModuleList([torch.nn.Conv2d(in_channels=256,
                                                                  out_channels=256,
                                                                  kernel_size=3,
                                                                  stride=1,
@@ -43,7 +43,7 @@ class fpn_body(torch.nn.Module):
         for i in range(len(self.fpn_lateral)):
             lateral[i]=self.fpn_lateral[i](lateral[i])
         # do top-down pass
-        for i in range(len(self.fpn_lateral)-2, -1, -1):
+        for i in range(len(self.fpn_lateral)-2, -1, -1): # loop is done backwards, updating from last-1 to first lateral tensors
             lateral[i]=self.upsample(lateral[i+1])+lateral[i]
         # do output convolutions
         for i in range(len(self.fpn_lateral)):
@@ -184,6 +184,7 @@ class detector(torch.nn.Module):
         # wrap in FPN model if needed
         if self.use_fpn_body:
             self.conv_body = fpn_body(self.conv_body, conv_body_layers, fpn_layers)
+        # create conv head
         if conv_head_layers=='two_layer_mlp':
             self.conv_head=two_layer_mlp_head()
         else:
@@ -199,11 +200,11 @@ class detector(torch.nn.Module):
             spatial_scales = self.roi_spatial_scale
             if self.fpn_extra_lvl:
                 spatial_scales = spatial_scales + [spatial_scales[-1]/2.]
-            self.proposal_generator = [GenerateProposals(train=self.train,
+            self.proposal_generator = torch.nn.ModuleList([GenerateProposals(train=self.train,
                                                          spatial_scale=spatial_scales[i],
                                                          anchor_sizes=(32*2**i,),
                                                          rpn_pre_nms_top_n=12000 if self.train else 1000,
-                                                         rpn_post_nms_top_n=2000 if self.train else 1000) for i in range(len(spatial_scales))]
+                                                         rpn_post_nms_top_n=2000 if self.train else 1000) for i in range(len(spatial_scales))])
             # Note, even when using the extra fpn level, proposals are note collected at this level
             self.collect_and_distr_rois = CollectAndDistributeFpnRpnProposals(spatial_scales=self.roi_spatial_scale,train=self.train)
 
