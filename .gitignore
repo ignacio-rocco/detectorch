@@ -1,8 +1,6 @@
 **/*.o
 **/*.so
 **/__pycache__/
-build/
-lib/build/
 .ipynb_checkpoints/
 debug/
 lib/utils_cython/*.c
