@@ -234,13 +234,13 @@ Tensor roi_align_forward_cpu(
 {
   // Input is the output of the last convolutional layer in the Backbone network, so
   // it should be in the format of NCHW
-  AT_ASSERT(input.ndimension() == 4, "Input to RoI Pooling should be a NCHW Tensor");
+  AT_CHECK(input.ndimension() == 4, "Input to RoI Pooling should be a NCHW Tensor");
 
   // ROIs is the set of region proposals to process. It is a 2D Tensor where the first
   // dim is the # of proposals, and the second dim is the proposal itself in the form
   // [batch_index startW startH endW endH]
-  AT_ASSERT(bottom_rois.ndimension() == 2, "RoI Proposals should be a 2D Tensor, (batch_sz x proposals)");
-  AT_ASSERT(bottom_rois.size(1) == 5, "Proposals should be of the form [batch_index startW startH endW enH]");
+  AT_CHECK(bottom_rois.ndimension() == 2, "RoI Proposals should be a 2D Tensor, (batch_sz x proposals)");
+  AT_CHECK(bottom_rois.size(1) == 5, "Proposals should be of the form [batch_index startW startH endW enH]");
 
   auto num_rois = bottom_rois.size(0);
   auto roi_cols = bottom_rois.size(1);
@@ -248,14 +248,14 @@ Tensor roi_align_forward_cpu(
   auto height = input.size(2);
   auto width = input.size(3);
 
-  AT_ASSERT(roi_cols == 4 || roi_cols == 5, "RoI Proposals should have 4 or 5 columns");
+  AT_CHECK(roi_cols == 4 || roi_cols == 5, "RoI Proposals should have 4 or 5 columns");
 
 
   // Output Tensor is (num_rois, C, pooled_height, pooled_width)
   auto output = input.type().tensor({num_rois, channels, pooled_height, pooled_width});
 
-  AT_ASSERT(input.is_contiguous(), "input must be contiguous");
-  AT_ASSERT(bottom_rois.is_contiguous(), "bottom_rois must be contiguous");
+  AT_CHECK(input.is_contiguous(), "input must be contiguous");
+  AT_CHECK(bottom_rois.is_contiguous(), "bottom_rois must be contiguous");
 
 
   roi_align_forward_loop(

@@ -202,18 +202,18 @@ Tensor roi_align_backward_cpu(
   // ROIs is the set of region proposals to process. It is a 2D Tensor where the first
   // dim is the # of proposals, and the second dim is the proposal itself in the form
   // [batch_index startW startH endW endH]
-  AT_ASSERT(bottom_rois.ndimension() == 2, "RoI Proposals should be a 2D Tensor, (batch_sz x proposals)");
-  AT_ASSERT(bottom_rois.size(1) == 5, "Proposals should be of the form [batch_index startW startH endW enH]");
+  AT_CHECK(bottom_rois.ndimension() == 2, "RoI Proposals should be a 2D Tensor, (batch_sz x proposals)");
+  AT_CHECK(bottom_rois.size(1) == 5, "Proposals should be of the form [batch_index startW startH endW enH]");
 
   auto num_rois = bottom_rois.size(0);
   auto roi_cols = bottom_rois.size(1);
 
-  AT_ASSERT(roi_cols == 4 || roi_cols == 5, "RoI Proposals should have 4 or 5 columns");
+  AT_CHECK(roi_cols == 4 || roi_cols == 5, "RoI Proposals should have 4 or 5 columns");
 
   // Output Tensor is (num_rois, C, pooled_height, pooled_width)
   auto output = bottom_rois.type().tensor({b_size, channels, height, width}).zero_(); // gradient wrt input features
 
-  AT_ASSERT(bottom_rois.is_contiguous(), "bottom_rois must be contiguous");
+  AT_CHECK(bottom_rois.is_contiguous(), "bottom_rois must be contiguous");
 
   roi_align_backward_loop(
     grad_output.numel(), 
